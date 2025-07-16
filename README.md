@@ -1,0 +1,2 @@
+# 2nd_ai_assistant_project
+2nd_ai_assistant_project
