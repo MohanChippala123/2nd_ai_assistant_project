@@ -20,7 +20,7 @@ def authenticate_user():
         flow = Flow.from_client_secrets_file(
             CLIENT_SECRET_FILE,
             scopes=SCOPES,
-            redirect_uri="http://localhost:8501"
+            redirect_uri="https://mohanvittal-second-ai-assistant.streamlit.app"
         )
 
         auth_url, _ = flow.authorization_url(prompt="consent")
