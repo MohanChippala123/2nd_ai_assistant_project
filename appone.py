@@ -13,7 +13,7 @@ import pickle
 
 # === GCP CREDENTIAL SETUP === #
 gcp_credentials_dict = st.secrets["gcp_key"]
-with open("gcp_key.json", "w") as f:
+with open("ai.json", "w") as f:
     json.dump(dict(gcp_credentials_dict), f)
 
 credentials = service_account.Credentials.from_service_account_info(gcp_credentials_dict)
@@ -21,7 +21,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "ai.json"
 
 # === GOOGLE CALENDAR AUTH === #
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-CLIENT_SECRETS_FILE = "gcp-key.json"
+CLIENT_SECRETS_FILE = "client_secret.json"
 
 def authenticate_google():
     if 'credentials' not in st.session_state:
