@@ -1,3 +1,77 @@
+
+import streamlit as st
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+import os
+import pickle
+import datetime
+import json
+
+# Constants
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+CLIENT_SECRET_FILE = "client_secret.json"
+TOKEN_FILE = "token.pkl"
+
+def authenticate_user():
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, "rb") as token:
+            credentials = pickle.load(token)
+    else:
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRET_FILE,
+            scopes=SCOPES,
+            redirect_uri="http://localhost:8501"
+        )
+
+        auth_url, _ = flow.authorization_url(prompt="consent")
+        st.markdown(f"[Click here to authenticate with Google Calendar]({auth_url})")
+
+        code = st.text_input("Paste the full redirect URL after logging in:")
+        if code:
+            try:
+                # Extract the full code from the URL
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(code)
+                query = parse_qs(parsed.query)
+                full_code = query.get("code")[0]
+
+                flow.fetch_token(code=full_code)
+                credentials = flow.credentials
+
+                with open(TOKEN_FILE, "wb") as token:
+                    pickle.dump(credentials, token)
+                st.success("Authenticated successfully!")
+            except Exception as e:
+                st.error(f"Authentication failed: {e}")
+                return None
+        else:
+            return None
+    return credentials
+
+def list_calendar_events(credentials):
+    service = build("calendar", "v3", credentials=credentials)
+    now = datetime.datetime.utcnow().isoformat() + "Z"
+    events_result = service.events().list(
+        calendarId='primary', timeMin=now,
+        maxResults=10, singleEvents=True, orderBy='startTime').execute()
+
+    events = events_result.get("items", [])
+    if not events:
+        st.info("No upcoming events found.")
+    for event in events:
+        start = event["start"].get("dateTime", event["start"].get("date"))
+        st.write(f"- {start}: {event['summary']}")
+
+# ==== Streamlit App ====
+st.title("🔒 Google Calendar OAuth 2.0 Integration")
+
+creds = authenticate_user()
+if creds:
+    st.success("You’re authenticated!")
+    if st.button("Show my upcoming calendar events"):
+        list_calendar_events(creds)
+
+'''
 import os
 import streamlit as st
 from google.cloud import aiplatform, firestore
@@ -178,3 +252,4 @@ with st.expander("➕ Add Event to Google Calendar", expanded=False):
                 st.success(f"Event created! [View it on Google Calendar]({link})")
             except Exception as e:
                 st.error(f"Failed to add event: {e}")
+                '''
